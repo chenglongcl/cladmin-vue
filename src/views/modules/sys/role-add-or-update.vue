@@ -29,25 +29,25 @@ export default {
       menuList: [],
       menuListTreeProps: {
         label: "name",
-        children: "children"
+        children: "children",
       },
       dataForm: {
         id: 0,
         roleName: "",
-        remark: ""
+        remark: "",
       },
       dataRule: {
         roleName: [
-          { required: true, message: "角色名称不能为空", trigger: "blur" }
-        ]
+          { required: true, message: "角色名称不能为空", trigger: "blur" },
+        ],
       },
-      tempKey: -666666 // 临时key, 用于解决tree半选中状态项不能传给后台接口问题. # 待优化
+      tempKey: 666666, // 临时key, 用于解决tree半选中状态项不能传给后台接口问题. # 待优化
     };
   },
   computed: {
     ...mapState({
-      userInfo: state => state.user
-    })
+      userInfo: (state) => state.user,
+    }),
   },
   methods: {
     init(id) {
@@ -87,7 +87,7 @@ export default {
     },
     // 表单提交
     dataFormSubmit() {
-      this.$refs["dataForm"].validate(valid => {
+      this.$refs["dataForm"].validate((valid) => {
         if (valid) {
           this.$http
             .postOrPutRole({
@@ -99,7 +99,7 @@ export default {
                 this.$refs.menuListTree.getCheckedKeys(),
                 [this.tempKey],
                 this.$refs.menuListTree.getHalfCheckedKeys()
-              )
+              ),
             })
             .then(({ data }) => {
               if (data && data.code === 0) {
@@ -110,7 +110,7 @@ export default {
                   onClose: () => {
                     this.visible = false;
                     this.$emit("refreshDataList");
-                  }
+                  },
                 });
               } else {
                 this.$message.error(data.message);
@@ -118,7 +118,7 @@ export default {
             });
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
