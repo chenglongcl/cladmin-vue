@@ -16,6 +16,12 @@ import {
 
 Vue.use(Router)
 
+// 解决重复点击路由报错的BUG
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch((err) => err)
+}
+
 // 开发环境不使用懒加载, 因为懒加载页面太多的话会造成webpack热更新太慢, 所以只有生产环境使用懒加载
 const _import = require('./import-' + process.env.NODE_ENV)
 
@@ -77,15 +83,6 @@ const mainRoutes = {
       meta: {
         title: 'demo-echarts',
         isTab: false
-      }
-    },
-    {
-      path: '/demo-ueditor',
-      component: _import('demo/ueditor'),
-      name: 'demo-ueditor',
-      meta: {
-        title: 'demo-ueditor',
-        isTab: true
       }
     },
     {

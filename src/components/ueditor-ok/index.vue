@@ -2,24 +2,21 @@
   <div class="mod-demo-ueditor">
     <vue-ueditor-wrap v-model="ueContent" :config="myConfig" @ready="ready" @beforeInit="addCustomUI" :destroy="true"></vue-ueditor-wrap>
     <!-- 弹窗, 上传文件 -->
-    <div>
-      <upload v-if="uploadVisible" ref="upload" @uploadSuccess="uploadSuccess" :mimeType="mimeType" @closeHandle="uploadCloseHandle" :uploadDomain="uploadDomain"></upload>
-    </div>
+    <UploaderOSS v-if="uploaderVisible" ref="uploaderOSS" :limit="uploaderLimit" :inputAttrs="uploaderInputAtrrs" @on-success-files="handleSuccessFiles" @on-fail-files="handleFailFiles"></UploaderOSS>
   </div>
 </template>
 
 <script>
-import Upload from "@/components/upload";
+import UploaderOSS from "@/components/upload/uploader-oss";
 import VueUeditorWrap from "vue-ueditor-wrap";
 export default {
   name: "UeditorOk",
   props: {
     frameHeight: Number,
-    uploadDomain: String
   },
   components: {
-    Upload,
-    VueUeditorWrap
+    UploaderOSS,
+    VueUeditorWrap,
   },
   data() {
     let myConfig = {
@@ -62,9 +59,9 @@ export default {
           "unlink",
           "foreword",
           "subhead",
-          "quote"
-        ]
-      ]
+          "quote",
+        ],
+      ],
     };
     if (process.env.NODE_ENV == "production") {
       myConfig[
@@ -75,12 +72,14 @@ export default {
       ] = `/${window.SITE_CONFIG.version}/static/UEditor/themes/iframe.css`;
     }
     return {
-      mimeType: "",
-      uploadVisible: false,
+      uploaderVisible: false,
       ueditor: null,
       ueContent: "",
       myConfig: myConfig,
-      dialogVisible: false
+      uploaderInputAtrrs: {
+        accept: "*/*",
+      },
+      uploaderLimit: 0,
     };
   },
   mounted() {},
@@ -108,12 +107,12 @@ export default {
             // 点击时执行的命令
             onclick: () => {
               // 这里可以不用执行命令，做你自己的操作也可
-              this.mimeType = "images";
-              this.uploadVisible = true;
+              this.uploaderInputAtrrs.accept = "image/*";
+              this.uploaderVisible = true;
               this.$nextTick(() => {
-                this.$refs.upload.init();
+                this.$refs.uploaderOSS.init();
               });
-            }
+            },
           });
           // 当点到编辑内容上时，按钮要做的状态反射
           editor.addListener("selectionchange", () => {
@@ -147,12 +146,12 @@ export default {
             // 点击时执行的命令
             onclick: () => {
               // 这里可以不用执行命令，做你自己的操作也可
-              this.mimeType = "videos";
-              this.uploadVisible = true;
+              this.uploaderInputAtrrs.accept = "video/*";
+              this.uploaderVisible = true;
               this.$nextTick(() => {
-                this.$refs.upload.init();
+                this.$refs.uploaderOSS.init();
               });
-            }
+            },
           });
           // 当点到编辑内容上时，按钮要做的状态反射
           editor.addListener("selectionchange", () => {
@@ -173,35 +172,43 @@ export default {
       );
     },
     //上传成功
-    uploadSuccess(info) {
-      switch (this.mimeType) {
-        case "images":
-          this.ueditor.execCommand("insertimage", {
-            src: info.url
+    handleSuccessFiles(files) {
+      console.log("上传成功的文件", files);
+      switch (this.uploaderInputAtrrs.accept) {
+        case "image/*":
+          files.forEach((file, index, arr) => {
+            this.ueditor.execCommand(
+              "inserthtml",
+              `<p><img src="${file.url}" /></p>`
+            );
           });
           break;
-        case "videos":
-          this.ueditor.execCommand("insertvideo", {
-            url: info.url
+        case "video/*":
+          files.forEach((file, index, arr) => {
+            this.ueditor.execCommand(
+              "inserthtml",
+              `<p><video src="${file.url}" /></p>`
+            );
           });
           break;
         default:
           break;
       }
     },
-    uploadCloseHandle() {
-      this.$refs.upload.clearFiles();
-    }
+    //上传失败
+    handleFailFiles(files) {
+      console.log("上传失败的文件", files);
+    },
   },
   watch: {
     ueContent(newVal, oldval) {
       this.$emit("contentHandle", newVal);
-    }
-  }
+    },
+  },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .mod-demo-ueditor {
   position: relative;
   > .el-alert {

@@ -75,7 +75,9 @@ import {
   Loading,
   MessageBox,
   Message,
-  Notification
+  Notification,
+  Image,
+  Scrollbar
 } from 'element-ui'
 
 Vue.use(Pagination)
@@ -141,6 +143,9 @@ Vue.use(Header)
 Vue.use(Aside)
 Vue.use(Main)
 Vue.use(Footer)
+Vue.use(Image)
+Vue.use(Scrollbar)
+
 
 Vue.use(Loading.directive)
 
@@ -152,4 +157,6 @@ Vue.prototype.$prompt = MessageBox.prompt
 Vue.prototype.$notify = Notification
 Vue.prototype.$message = Message
 
-Vue.prototype.$ELEMENT = { size: 'medium' }
+Vue.prototype.$ELEMENT = {
+  size: 'medium'
+}

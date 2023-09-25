@@ -9,6 +9,11 @@ const api = {
     method: 'get',
     params: httpRequest.adornParams(params)
   }),
+  getAliyunAssumeRole: (params = {}) => httpRequest({
+    url: httpRequest.adornUrl('/sts/assumeRole'),
+    method: 'get',
+    params: httpRequest.adornParams(params)
+  }),
   //user
   getPersonalUserInfo: (params = {}) => httpRequest({
     url: httpRequest.adornUrl('/v1/users/personal'),
@@ -124,11 +129,6 @@ const api = {
     params: httpRequest.adornParams(params)
   }),
   //oss
-  putSaveConfig: ((data = {}) => httpRequest({
-    url: httpRequest.adornUrl('/v1/oss/saveConfig'),
-    method: 'put',
-    data: httpRequest.adornData(data)
-  })),
   postUploadFileToOSS: ((url, data = {}, progressCallback) => httpRequest({
     headers: {
       "Content-Type": "multipart/form-data; boundary={boundary}"
@@ -186,8 +186,8 @@ const api = {
     params: httpRequest.adornParams(params)
   }),
   postOrPutConfig: ((data = {}) => httpRequest({
-    url: httpRequest.adornUrl(`/v1/config/${data.configId ? "update" : "create"}`),
-    method: `${data.configId ? "put" : "post"}`,
+    url: httpRequest.adornUrl(`/v1/config/create`),
+    method: 'post',
     data: httpRequest.adornData(data)
   })),
   //login

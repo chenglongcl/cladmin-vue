@@ -12,7 +12,7 @@
                   </MDinput>
                 </el-form-item>
                 <el-form-item style="line-height:0" prop="content">
-                  <ueditor-ok ref="ueditorOk" :frameHeight="540" @contentHandle="setContent" :uploadDomain="'aliyunOss'"></ueditor-ok>
+                  <ueditor-ok ref="ueditorOk" :frameHeight="540" @contentHandle="setContent"></ueditor-ok>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -34,7 +34,7 @@
               <el-input v-model="dataForm.parentName" v-popover:menuListPopover :readonly="true" placeholder="点击选择分类" class="menu-list__input"></el-input>
             </el-form-item>
             <el-form-item label="封面图片" prop="thumb" class="is-required">
-              <upload-thumb :defaultUrl="dataForm.thumb" :mimeType="'images'" @uploadSuccess="uploadThumbSuccess" @removeThumb="removeThumb" :uploadDomain="'aliyunOss'"></upload-thumb>
+              <upload-thumb :defaultUrl="dataForm.thumb" @uploadSuccess="uploadThumbSuccess"></upload-thumb>
             </el-form-item>
             <el-form-item label="发布时间" prop="releaseTime">
               <el-date-picker v-model="dataForm.releaseTime" type="datetime" placeholder="发布时间" class="createTime" value-format="yyyy-MM-dd HH:mm:ss">
@@ -50,7 +50,7 @@
 <script>
 import MDinput from "@/components/md-input";
 import UeditorOk from "@/components/ueditor-ok";
-import UploadThumb from "@/components/upload-thumb/type-one";
+import UploadThumb from "@/components/upload/thumb-one";
 import { treeDataTranslate } from "@/utils";
 export default {
   data() {
@@ -70,24 +70,24 @@ export default {
         thumb: "",
         content: "",
         releaseTime: "",
-        userId: 0
+        userId: 0,
       },
       loading: false,
       menuList: [],
       menuListTreeProps: {
         label: "name",
-        children: "children"
+        children: "children",
       },
       rules: {
         title: [{ required: true, message: "请输入文章标题" }],
         parentName: [
-          { required: true, message: "所在分类不能为空", trigger: "change" }
+          { required: true, message: "所在分类不能为空", trigger: "change" },
         ],
         content: [
-          { required: true, message: "文章内容不能为空", trigger: "change" }
+          { required: true, message: "文章内容不能为空", trigger: "change" },
         ],
-        thumb: [{ validator: validateThumb }]
-      }
+        thumb: [{ validator: validateThumb }],
+      },
     };
   },
   components: { MDinput, UeditorOk, UploadThumb },
@@ -98,7 +98,7 @@ export default {
     documentClientHeight: {
       get() {
         return this.$store.state.common.documentClientHeight;
-      }
+      },
     },
     siteContentViewHeight() {
       var height = this.documentClientHeight - 50 - 30 - 2 - 40;
@@ -107,13 +107,13 @@ export default {
     userName: {
       get() {
         return this.$store.state.user.name;
-      }
+      },
     },
     userId: {
       get() {
         return this.$store.state.user.id;
-      }
-    }
+      },
+    },
   },
   methods: {
     getCategoryData() {
@@ -157,11 +157,8 @@ export default {
       this.dataForm.parentName = (this.$refs.menuListTree.getCurrentNode() ||
         {})["name"];
     },
-    uploadThumbSuccess(url) {
-      this.dataForm.thumb = url;
-    },
-    removeThumb(url) {
-      this.dataForm.thumb = "";
+    uploadThumbSuccess(files) {
+      this.dataForm.thumb = files[0].url;
     },
     setContent(content) {
       this.dataForm.content = content;
@@ -171,7 +168,7 @@ export default {
     },
     dataFormSubmit() {
       this.dataForm.userId = this.userId;
-      this.$refs["dataForm"].validate(valid => {
+      this.$refs["dataForm"].validate((valid) => {
         if (valid) {
           this.loading = true;
           this.$http.postOrPutArticle(this.dataForm).then(({ data }) => {
@@ -183,7 +180,7 @@ export default {
                 duration: 1000,
                 onClose: () => {
                   this.$router.go(-1);
-                }
+                },
               });
             } else {
               this.$message.error(data.message);
@@ -191,12 +188,12 @@ export default {
           });
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .mod-article {
   .aside {
     background-color: #f2f6fc;

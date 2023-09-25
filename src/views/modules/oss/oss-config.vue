@@ -1,6 +1,6 @@
 <template>
   <el-dialog title="云存储配置" :close-on-click-modal="false" :visible.sync="visible">
-    <el-form :model="dataForm" :rules="dataRule" ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="120px">
+    <el-form :model="dataForm" :rules="dataRule" ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="140px">
       <el-form-item size="mini" label="存储类型">
         <el-radio-group v-model="dataForm.ossType">
           <el-radio :label="'1'">阿里云</el-radio>
@@ -84,41 +84,51 @@ export default {
   data() {
     return {
       visible: false,
+      configId: 0,
+      key: "CLOUD_STORAGE_CONFIG_KEY",
       dataForm: {},
-      dataRule: {}
+      dataRule: {},
     };
   },
   methods: {
     init(id) {
       this.visible = true;
-      this.$http
-        .getConfigInfo({ key: "CLOUD_STORAGE_CONFIG_KEY" })
-        .then(({ data }) => {
-          this.dataForm = data && data.code === 0 ? data.data.paramValue : [];
-        });
+      this.$http.getConfigInfo({ key: this.key }).then(({ data }) => {
+        if (data && data.code === 0) {
+          this.dataForm = data.data.paramValue;
+          this.configId = data.data.configId;
+        }
+      });
     },
     // 表单提交
     dataFormSubmit() {
-      this.$refs["dataForm"].validate(valid => {
+      this.$refs["dataForm"].validate((valid) => {
         if (valid) {
-          this.$http.putSaveConfig(this.dataForm).then(({ data }) => {
-            if (data && data.code === 0) {
-              this.$message({
-                message: "操作成功",
-                type: "success",
-                duration: 1500,
-                onClose: () => {
-                  this.visible = false;
-                }
-              });
-            } else {
-              this.$message.error(data.message);
-            }
-          });
+          this.$http
+            .postOrPutConfig({
+              configId: this.configId,
+              paramKey: this.key,
+              paramValue: JSON.stringify(this.dataForm),
+              type: 2,
+            })
+            .then(({ data }) => {
+              if (data && data.code === 0) {
+                this.$message({
+                  message: "操作成功",
+                  type: "success",
+                  duration: 1500,
+                  onClose: () => {
+                    this.visible = false;
+                  },
+                });
+              } else {
+                this.$message.error(data.message);
+              }
+            });
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -23,18 +23,18 @@ export default {
         this.$nextTick(() => {
           this.$store.commit("common/updateContentIsNeedRefresh", false);
         });
-      }
+      },
     };
   },
   data() {
     return {
-      loading: false
+      loading: false,
     };
   },
   components: {
     MainNavbar,
     MainSidebar,
-    MainContent
+    MainContent,
   },
   computed: {
     documentClientHeight: {
@@ -43,12 +43,12 @@ export default {
       },
       set(val) {
         this.$store.commit("common/updateDocumentClientHeight", val);
-      }
+      },
     },
     sidebarFold: {
       get() {
         return this.$store.state.common.sidebarFold;
-      }
+      },
     },
     userId: {
       get() {
@@ -56,7 +56,7 @@ export default {
       },
       set(val) {
         this.$store.commit("user/updateId", val);
-      }
+      },
     },
     userName: {
       get() {
@@ -64,8 +64,8 @@ export default {
       },
       set(val) {
         this.$store.commit("user/updateName", val);
-      }
-    }
+      },
+    },
   },
   created() {
     this.getUserInfo();
@@ -92,10 +92,10 @@ export default {
             this.userName = data.data.username;
           }
         })
-        .catch(error => {
+        .catch((error) => {
           throw error;
         });
-    }
-  }
+    },
+  },
 };
 </script>

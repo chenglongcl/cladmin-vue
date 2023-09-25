@@ -3,83 +3,73 @@
     <el-form :inline="true" :model="dataForm">
       <el-form-item>
         <el-button type="primary" @click="configHandle()">云存储配置</el-button>
+        <el-button type="primary" @click="configAliYunSTSHandle()">阿里云STS配置</el-button>
         <el-button type="primary" @click="uploadHandle()">上传文件</el-button>
+        <el-button type="primary" @click="handleUploaderOSS()">上传文件OSS</el-button>
+        <el-button type="primary" @click="handleUploaderLocal()">上传文件本地</el-button>
       </el-form-item>
     </el-form>
     <!-- 弹窗, 云存储配置 -->
     <config v-if="configVisible" ref="config"></config>
+    <!-- 弹窗, 阿里云STS配置 -->
+    <STSConfig v-if="configAliYunSTSVisible" ref="stsConfig"></STSConfig>
     <!-- 弹窗, 上传文件 -->
-    <upload v-if="uploadVisible" ref="upload" @refreshDataList="getDataList" @uploadSuccess="uploadSuccess" @removeFile="removeFile" :mimeType="'images'" :uploadDomain="'aliyunOss'"></upload>
+    <upload v-if="uploadVisible" ref="upload" @uploadSuccess="uploadSuccess" :mimeType="'videos'" :uploadDomain="'aliyunOssBySTS'"></upload>
+    <!---->
+    <UploaderOSS v-if="uploaderVisible" ref="uploaderOSS" :limit="8" :inputAttrs="{}" @on-success-files="handleSuccessFiles" @on-fail-files="handleFailFiles"></UploaderOSS>
+    <!---->
+    <UploaderLocal v-if="uploaderLocalVisible" ref="uploaderLocal" :limit="18" :inputAttrs="{}" @on-success-files="handleSuccessFiles" @on-fail-files="handleFailFiles"></UploaderLocal>
   </div>
 </template>
 
 <script>
 import Config from "./oss-config";
+import STSConfig from "./sts-config";
 import Upload from "@/components/upload";
+import UploaderOSS from "@/components/upload/uploader-oss";
+import UploaderLocal from "@/components/upload/uploader";
+import dayjs from "dayjs";
 export default {
   data() {
     return {
       dataForm: {},
-      dataList: [],
-      pageIndex: 1,
-      pageSize: 10,
-      totalPage: 0,
-      dataListLoading: false,
-      dataListSelections: [],
       configVisible: false,
+      configAliYunSTSVisible: false,
       uploadVisible: false,
+      uploaderVisible: false,
+      uploaderLocalVisible: false,
       images: [],
       videos: [],
-      audios: []
+      audios: [],
+      doucments: [],
+      fileList: [],
+      updateOptions: {
+        region: "oss-cn-shanghai",
+        bucket: "aisyweixinpic",
+        path: dayjs().format("YYYYMMDD"),
+      },
     };
   },
   components: {
     Config,
-    Upload
-  },
-  activated() {
-    //this.getDataList();
+    Upload,
+    STSConfig,
+    UploaderOSS,
+    UploaderLocal,
   },
   methods: {
-    // 获取数据列表
-    getDataList() {
-      this.dataListLoading = true;
-      this.$http
-        .getOssList({
-          page: this.pageIndex,
-          limit: this.pageSize
-        })
-        .then(({ data }) => {
-          if (data && data.code === 0) {
-            this.dataList = data.page.list;
-            this.totalPage = data.page.totalCount;
-          } else {
-            this.dataList = [];
-            this.totalPage = 0;
-          }
-          this.dataListLoading = false;
-        });
-    },
-    // 每页数
-    sizeChangeHandle(val) {
-      this.pageSize = val;
-      this.pageIndex = 1;
-      this.getDataList();
-    },
-    // 当前页
-    currentChangeHandle(val) {
-      this.pageIndex = val;
-      this.getDataList();
-    },
-    // 多选
-    selectionChangeHandle(val) {
-      this.dataListSelections = val;
-    },
     // 云存储配置
     configHandle() {
       this.configVisible = true;
       this.$nextTick(() => {
         this.$refs.config.init();
+      });
+    },
+    // STS配置
+    configAliYunSTSHandle() {
+      this.configAliYunSTSVisible = true;
+      this.$nextTick(() => {
+        this.$refs.stsConfig.init();
       });
     },
     // 上传文件
@@ -89,55 +79,40 @@ export default {
         this.$refs.upload.init();
       });
     },
+    // 上传文件OSS
+    handleUploaderOSS() {
+      this.uploaderVisible = true;
+      this.$nextTick(() => {
+        this.$refs.uploaderOSS.init();
+      });
+    },
+    //上传文件本地
+    handleUploaderLocal() {
+      this.uploaderLocalVisible = true;
+      this.$nextTick(() => {
+        this.$refs.uploaderLocal.init();
+      });
+    },
     //上传成功
-    uploadSuccess(info) {
-      this[info.mimeType].push(info.url);
+    handleSuccessFiles(files) {
+      console.log("上传成功的文件", files);
     },
-    //移除上传文件
-    removeFile(info) {
-      this[info.mimeType].splice(
-        this[info.mimeType].findIndex(url => url === info.url),
-        1
-      );
+    //上传失败
+    handleFailFiles(files) {
+      console.log("上传失败的文件", files);
     },
-    // 删除
-    deleteHandle(id) {
-      var ids = id
-        ? [id]
-        : this.dataListSelections.map(item => {
-            return item.id;
-          });
-      this.$confirm(
-        `确定对[id=${ids.join(",")}]进行[${id ? "删除" : "批量删除"}]操作?`,
-        "提示",
-        {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning"
-        }
-      )
-        .then(() => {
-          this.$http({
-            url: this.$http.adornUrl("/sys/oss/delete"),
-            method: "post",
-            data: this.$http.adornData(ids, false)
-          }).then(({ data }) => {
-            if (data && data.code === 0) {
-              this.$message({
-                message: "操作成功",
-                type: "success",
-                duration: 1500,
-                onClose: () => {
-                  this.getDataList();
-                }
-              });
-            } else {
-              this.$message.error(data.message);
-            }
-          });
-        })
-        .catch(() => {});
-    }
-  }
+    //
+    uploadSuccess(fileList) {
+      fileList.forEach((file, index, arr) => {
+        this[file.raw.mimeType].push(file.raw.url);
+      });
+    },
+    handleCloseUpload() {
+      this.fileList = [];
+    },
+    handleConfirm(files) {
+      console.log(files);
+    },
+  },
 };
 </script>

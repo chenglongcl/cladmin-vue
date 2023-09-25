@@ -3,7 +3,7 @@ import axios from 'axios'
 import router from '@/router'
 import qs from 'qs'
 import merge from 'lodash/merge'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import {
   Message
 } from 'element-ui';
@@ -45,7 +45,7 @@ http.interceptors.response.use(response => {
         if (tokenValidTime !== null) {
           let expiredAt = tokenValidTime["expired_at"]
           let refreshExpiredAt = tokenValidTime["refresh_expired_at"]
-          let now = moment()
+          let now = dayjs()
           if (!config.isRetryRequest && now.isAfter(expiredAt) && now.isBefore(refreshExpiredAt)) {
             const refresh = new Promise((resolve, reject) => {
               //刷新token

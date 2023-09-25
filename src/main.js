@@ -3,6 +3,7 @@ import App from '@/App'
 import router from '@/router' // api: https://github.com/vuejs/vue-router
 import store from '@/store' // api: https://github.com/vuejs/vuex
 import VueCookie from 'vue-cookie' // api: https://github.com/alfhen/vue-cookie
+import '@/filters'
 import '@/element-ui' // api: https://github.com/ElemeFE/element
 import '@/icons' // api: http://www.iconfont.cn/
 import '@/element-ui-theme'
@@ -16,7 +17,8 @@ import {
   isAuth
 } from '@/utils'
 import cloneDeep from 'lodash/cloneDeep'
-
+import uploader from 'vue-simple-uploader/'
+Vue.use(uploader)
 
 Vue.use(VueCookie)
 Vue.config.productionTip = false
@@ -40,8 +42,5 @@ new Vue({
   el: '#app',
   router,
   store,
-  template: '<App/>',
-  components: {
-    App
-  }
+  render: h => h(App)
 })

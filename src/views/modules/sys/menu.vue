@@ -52,12 +52,12 @@ export default {
       dataForm: {},
       dataList: [],
       dataListLoading: false,
-      addOrUpdateVisible: false
+      addOrUpdateVisible: false,
     };
   },
   components: {
     TableTreeColumn,
-    AddOrUpdate
+    AddOrUpdate,
   },
   activated() {
     this.getDataList();
@@ -83,7 +83,7 @@ export default {
       this.$confirm(`确定对[id=${id}]进行[删除]操作?`, "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
-        type: "warning"
+        type: "warning",
       })
         .then(() => {
           this.$http.deleteMenu({ id: id }).then(({ data }) => {
@@ -94,7 +94,7 @@ export default {
                 duration: 1500,
                 onClose: () => {
                   this.getDataList();
-                }
+                },
               });
             } else {
               this.$message.error(data.message);
@@ -102,7 +102,7 @@ export default {
           });
         })
         .catch(() => {});
-    }
-  }
+    },
+  },
 };
 </script>

@@ -12,7 +12,7 @@ import * as Quill from "quill";
 export default {
   name: "QuillEditorOk",
   props: {
-    editorOption: Object
+    editorOption: Object,
   },
   components: { Upload },
   data() {
@@ -21,7 +21,7 @@ export default {
       mimeType: "",
       content: "",
       uploadType: "",
-      uploadVisible: false
+      uploadVisible: false,
     };
   },
   mounted() {
@@ -78,8 +78,8 @@ export default {
     onEditorChange({ quill, html, text }) {
       console.log("editor change!", quill, html, text);
       this.content = html;
-    }
-  }
+    },
+  },
 };
 </script>
 
