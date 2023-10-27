@@ -52,3 +52,7 @@ npm run dev
 ![](https://raw.githubusercontent.com/chenglongcl/cladmin-vue/master/demo-screenshot/01.png)
 
 ![](https://raw.githubusercontent.com/chenglongcl/cladmin-vue/master/demo-screenshot/02.png)
+
+![](https://raw.githubusercontent.com/chenglongcl/cladmin-vue/master/demo-screenshot/03.png)
+
+![](https://raw.githubusercontent.com/chenglongcl/cladmin-vue/master/demo-screenshot/04.png)
