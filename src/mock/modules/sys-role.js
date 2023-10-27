@@ -1,16 +1,18 @@
 import Mock from 'mockjs'
 
 // 生成数据列表
-var dataList = []
+const dataList = []
 for (let i = 0; i < Math.floor(Math.random() * 10 + 1); i++) {
-  dataList.push(Mock.mock({
-    'roleId': '@increment',
-    'roleName': '@name',
-    'remark': '@csentence',
-    'createUserId': 1,
-    'menuIdList': '@range(1, 10, 2)',
-    'createTime': '@datetime'
-  }))
+  dataList.push(
+    Mock.mock({
+      roleId: '@increment',
+      roleName: '@name',
+      remark: '@csentence',
+      createUserId: 1,
+      menuIdList: '@range(1, 10, 2)',
+      createTime: '@datetime'
+    })
+  )
 }
 
 // 获取角色列表
@@ -20,14 +22,14 @@ export function list() {
     url: '/v1/roles/list',
     type: 'get',
     data: {
-      'msg': 'success',
-      'code': 0,
-      'page': {
-        'totalCount': dataList.length,
-        'pageSize': 10,
-        'totalPage': 1,
-        'currPage': 1,
-        'list': dataList
+      msg: 'success',
+      code: 0,
+      page: {
+        totalCount: dataList.length,
+        pageSize: 10,
+        totalPage: 1,
+        currPage: 1,
+        list: dataList
       }
     }
   }
@@ -40,9 +42,9 @@ export function select() {
     url: '/v1/roles/select',
     type: 'get',
     data: {
-      'msg': 'success',
-      'code': 0,
-      'list': dataList
+      msg: 'success',
+      code: 0,
+      list: dataList
     }
   }
 }
@@ -54,9 +56,9 @@ export function info() {
     url: '/v1/roles/get',
     type: 'get',
     data: {
-      'msg': 'success',
-      'code': 0,
-      'role': dataList[0]
+      msg: 'success',
+      code: 0,
+      role: dataList[0]
     }
   }
 }
@@ -68,8 +70,8 @@ export function add() {
     url: '/v1/roles/create',
     type: 'post',
     data: {
-      'msg': 'success',
-      'code': 0
+      msg: 'success',
+      code: 0
     }
   }
 }
@@ -81,8 +83,8 @@ export function update() {
     url: '/v1/roles/update',
     type: 'post',
     data: {
-      'msg': 'success',
-      'code': 0
+      msg: 'success',
+      code: 0
     }
   }
 }
@@ -94,8 +96,8 @@ export function del() {
     url: '/v1/roles/del',
     type: 'post',
     data: {
-      'msg': 'success',
-      'code': 0
+      msg: 'success',
+      code: 0
     }
   }
 }

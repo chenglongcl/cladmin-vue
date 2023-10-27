@@ -77,7 +77,10 @@ import {
   Message,
   Notification,
   Image,
-  Scrollbar
+  Scrollbar,
+  Divider,
+  Drawer,
+  Link
 } from 'element-ui'
 
 Vue.use(Pagination)
@@ -145,7 +148,9 @@ Vue.use(Main)
 Vue.use(Footer)
 Vue.use(Image)
 Vue.use(Scrollbar)
-
+Vue.use(Divider)
+Vue.use(Drawer)
+Vue.use(Link)
 
 Vue.use(Loading.directive)
 

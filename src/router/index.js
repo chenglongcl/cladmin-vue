@@ -6,27 +6,30 @@
  */
 import Vue from 'vue'
 import Router from 'vue-router'
-//import http from '@/utils/httpRequest'
-import {
-  isURL
-} from '@/utils/validate'
-import {
-  clearLoginInfo
-} from '@/utils'
+import store from '@/store'
+import cloneDeep from 'lodash/cloneDeep'
+import request from '@/utils/request'
+import { isURL } from '@/utils/validate'
+import { clearLoginInfo } from '@/utils'
+
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location, onResolve, onReject) {
+  if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
+  return originalPush.call(this, location).catch(err => err)
+}
+Router.prototype.replace = function replace(location, onResolve, onReject) {
+  if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
+  return originalPush.call(this, location).catch(err => err)
+}
 
 Vue.use(Router)
 
-// 解决重复点击路由报错的BUG
-const originalPush = Router.prototype.push
-Router.prototype.push = function push(location) {
-  return originalPush.call(this, location).catch((err) => err)
-}
-
 // 开发环境不使用懒加载, 因为懒加载页面太多的话会造成webpack热更新太慢, 所以只有生产环境使用懒加载
-const _import = require('./import-' + process.env.NODE_ENV)
+const _import = require(`./import-${process.env.NODE_ENV}`)
 
 // 全局路由(无需嵌套上左右整体布局)
-const globalRoutes = [{
+const globalRoutes = [
+  {
     path: '/404',
     component: _import('common/404'),
     name: '404',
@@ -84,19 +87,10 @@ const mainRoutes = {
         title: 'demo-echarts',
         isTab: false
       }
-    },
-    {
-      path: '/content/article-add-or-update',
-      component: _import('modules/content/article-add-or-update'),
-      name: 'article-add-or-update',
-      meta: {
-        title: '添加/修改文章',
-        isTab: false
-      }
     }
   ],
   beforeEnter(to, from, next) {
-    let token = Vue.cookie.get('token')
+    const token = Vue.cookie.get('token')
     if (!token || !/\S/.test(token)) {
       clearLoginInfo()
       next({
@@ -107,85 +101,129 @@ const mainRoutes = {
   }
 }
 
-const router = new Router({
-  mode: 'history',
-  scrollBehavior: () => ({
-    y: 0
-  }),
-  isAddDynamicMenuRoutes: false, // 是否已经添加动态(菜单)路由
-  routes: globalRoutes.concat(mainRoutes)
-})
+const createRouter = () => {
+  return new Router({
+    mode: 'history',
+    scrollBehavior: () => ({
+      y: 0
+    }),
+    isAddDynamicMenuRoutes: false, // 是否已经添加动态(菜单)路由
+    routes: globalRoutes.concat(mainRoutes)
+  })
+}
+
+const router = createRouter()
 
 router.beforeEach((to, from, next) => {
   // 添加动态(菜单)路由
   // 1. 已经添加 or 全局路由, 直接访问
   // 2. 获取菜单列表, 添加并保存本地存储
-  if (router.options.isAddDynamicMenuRoutes || fnCurrentRouteType(to, globalRoutes) === 'global') {
+  if (
+    router.options.isAddDynamicMenuRoutes ||
+    fnCurrentRouteType(to, globalRoutes) === 'global'
+  ) {
     next()
   } else {
-    Vue.http.getMenuNav().then(({
-      data
-    }) => {
-      if (data && data.code === 0) {
-        fnAddDynamicMenuRoutes(data.data.menuList)
-        router.options.isAddDynamicMenuRoutes = true
-        sessionStorage.setItem('menuList', JSON.stringify(data.data.menuList || '[]'))
-        sessionStorage.setItem('permissions', JSON.stringify(data.data.permissions || '[]'))
-        next({
-          ...to,
-          replace: true
-        })
-      } else {
-        sessionStorage.setItem('menuList', '[]')
-        sessionStorage.setItem('permissions', '[]')
-        next()
-      }
+    initApp().then((res) => {
+      res ? next({
+        ...to,
+        replace: true
+      }) : next()
     }).catch((e) => {
-      console.log(`%c${e} 请求菜单列表和权限失败，跳转至登录页！！`, 'color:blue')
+      console.log(
+        `%c${e} 请求菜单列表和权限失败，跳转至登录页！！`,
+        'color:blue'
+      )
       router.push({
         name: 'login'
       })
     })
-    /* http({
-      url: http.adornUrl('/sys/menu/nav'),
-      method: 'get',
-      params: http.adornParams()
-    }).then(({
-      data
-    }) => {
-      if (data && data.code === 0) {
-        fnAddDynamicMenuRoutes(data.menuList)
-        router.options.isAddDynamicMenuRoutes = true
-        sessionStorage.setItem('menuList', JSON.stringify(data.menuList || '[]'))
-        sessionStorage.setItem('permissions', JSON.stringify(data.permissions || '[]'))
-        next({
-          ...to,
-          replace: true
-        })
-      } else {
-        sessionStorage.setItem('menuList', '[]')
-        sessionStorage.setItem('permissions', '[]')
-        next()
-      }
-    }).catch((e) => {
-      console.log(`%c${e} 请求菜单列表和权限失败，跳转至登录页！！`, 'color:blue')
-      router.push({
-        name: 'login'
-      })
-    }) */
   }
 })
+
+async function initApp() {
+  const [menus, permissions, dicts, user] = await Promise.all([
+    await request({
+      url: request.adornUrl('/v1/menus/nav'),
+      method: 'get',
+      params: request.adornParams()
+    }),
+    await request({
+      url: request.adornUrl('/v1/menus/permissions'),
+      method: 'get',
+      params: request.adornParams()
+    }),
+    await request({
+      url: request.adornUrl('/v1/dictType/all'),
+      method: 'get',
+      params: request.adornParams()
+    }),
+    await request({
+      url: request.adornUrl('/v1/users/personal'),
+      method: 'get',
+      params: request.adornParams()
+    })
+  ])
+  const { data: menusData = {}} = menus
+  const { data: permissionsData = {}} = permissions
+  const { data: dictsData = {}} = dicts
+  const { data: userData = {}} = user
+  let result = true
+  //
+  if (menusData && menusData.code === 0) {
+    fnAddDynamicMenuRoutes(menusData.data)
+    router.options.isAddDynamicMenuRoutes = true
+    sessionStorage.setItem(
+      'menuList',
+      JSON.stringify(menusData.data || '[]')
+    )
+  } else {
+    result = false
+  }
+  //
+  if (permissionsData && permissionsData.code === 0) {
+    sessionStorage.setItem(
+      'permissions',
+      JSON.stringify(permissionsData.data || '[]')
+    )
+  } else {
+    result = false
+  }
+  //
+  if (dictsData && dictsData.code === 0) {
+    sessionStorage.setItem(
+      'dicts',
+      JSON.stringify(dictsData.data || '[]')
+    )
+  } else {
+    result = false
+  }
+  //
+  if (userData && userData.code === 0) {
+    store.commit('user/updateId', userData.data.userId)
+    store.commit('user/updateName', userData.data.username)
+  } else {
+    result = false
+  }
+  if (!result) {
+    sessionStorage.setItem('menuList', '[]')
+    sessionStorage.setItem('permissions', '[]')
+    sessionStorage.setItem('dicts', '[]')
+  }
+  return result
+}
 
 /**
  * 判断当前路由类型, global: 全局路由, main: 主入口路由
  * @param {*} route 当前路由
  */
 function fnCurrentRouteType(route, globalRoutes = []) {
-  var temp = []
-  for (var i = 0; i < globalRoutes.length; i++) {
+  let temp = []
+  for (let i = 0; i < globalRoutes.length; i++) {
     if (route.path === globalRoutes[i].path) {
       return 'global'
-    } else if (globalRoutes[i].children && globalRoutes[i].children.length >= 1) {
+    }
+    if (globalRoutes[i].children && globalRoutes[i].children.length >= 1) {
       temp = temp.concat(globalRoutes[i].children)
     }
   }
@@ -198,13 +236,13 @@ function fnCurrentRouteType(route, globalRoutes = []) {
  * @param {*} routes 递归创建的动态(菜单)路由
  */
 function fnAddDynamicMenuRoutes(menuList = [], routes = []) {
-  var temp = []
-  for (var i = 0; i < menuList.length; i++) {
-    if (menuList[i].list && menuList[i].list.length >= 1) {
-      temp = temp.concat(menuList[i].list)
+  let temp = []
+  for (let i = 0; i < menuList.length; i++) {
+    if (menuList[i].children && menuList[i].children.length >= 1) {
+      temp = temp.concat(menuList[i].children)
     } else if (menuList[i].url && /\S/.test(menuList[i].url)) {
       menuList[i].url = menuList[i].url.replace(/^\//, '')
-      var route = {
+      const route = {
         path: menuList[i].url.replace('/', '-'),
         component: null,
         name: menuList[i].url.replace('/', '-'),
@@ -212,19 +250,21 @@ function fnAddDynamicMenuRoutes(menuList = [], routes = []) {
           menuId: menuList[i].menuId,
           title: menuList[i].name,
           isDynamic: true,
-          isTab: true,
+          isTab: menuList[i].isTab,
           iframeUrl: ''
         }
       }
       // url以http[s]://开头, 通过iframe展示
       if (isURL(menuList[i].url)) {
-        route['path'] = `i-${menuList[i].menuId}`
-        route['name'] = `i-${menuList[i].menuId}`
-        route['meta']['iframeUrl'] = menuList[i].url
+        route.path = `i-${menuList[i].menuId}`
+        route.name = `i-${menuList[i].menuId}`
+        route.meta.iframeUrl = menuList[i].url
       } else {
         try {
-          route['component'] = _import(`modules/${menuList[i].url}`) || null
-        } catch (e) {}
+          route.component = _import(`modules/${menuList[i].url}`) || null
+        } catch (e) {
+          console.log(e)
+        }
       }
       routes.push(route)
     }
@@ -232,23 +272,37 @@ function fnAddDynamicMenuRoutes(menuList = [], routes = []) {
   if (temp.length >= 1) {
     fnAddDynamicMenuRoutes(temp, routes)
   } else {
-    mainRoutes.name = 'main-dynamic'
-    mainRoutes.children = routes
-    router.addRoutes([
-      mainRoutes,
-      {
-        path: '*',
-        redirect: {
-          name: '404'
-        }
+    const dynamicRoutes = cloneDeep(mainRoutes)
+    dynamicRoutes.name = 'main-dynamic'
+    dynamicRoutes.children = routes
+    router.addRoute(dynamicRoutes)
+    router.addRoute({
+      path: '*',
+      redirect: {
+        name: '404'
       }
-    ])
-    sessionStorage.setItem('dynamicMenuRoutes', JSON.stringify(mainRoutes.children || '[]'))
+    })
+    sessionStorage.setItem(
+      'dynamicMenuRoutes',
+      JSON.stringify(dynamicRoutes.children || '[]')
+    )
     console.log('\n')
-    console.log('%c!<-------------------- 动态(菜单)路由 s -------------------->', 'color:blue')
-    console.log(mainRoutes.children)
-    console.log('%c!<-------------------- 动态(菜单)路由 e -------------------->', 'color:blue')
+    console.log(
+      '%c!<-------------------- 动态(菜单)路由 s -------------------->',
+      'color:blue'
+    )
+    console.log(dynamicRoutes.children)
+    console.log(
+      '%c!<-------------------- 动态(菜单)路由 e -------------------->',
+      'color:blue'
+    )
   }
+}
+
+// 重置路由函数 export
+export function resetRouter() {
+  const newRouter = createRouter()
+  router.matcher = newRouter.matcher // 替换成新的空路由
 }
 
 export default router

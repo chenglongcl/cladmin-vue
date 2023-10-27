@@ -1,12 +1,12 @@
 <template>
-  <el-card class="box-card-component" style="margin-left:8px;">
+  <el-card class="box-card-component" style="margin-left: 8px">
     <div slot="header" class="box-card-header">
       <img src="https://wpimg.wallstcn.com/e7d23d71-cf19-4b90-a1cc-f56af8c0903d.png">
     </div>
-    <div style="position:relative;">
+    <div style="position: relative">
       <pan-thumb :image="avatar" class="panThumb" />
       <mallki class-name="mallki-text" :text="`欢迎你，${userName}`" />
-      <div style="padding-top:35px;" class="progress-item">
+      <div style="padding-top: 35px" class="progress-item">
         <span>Vue</span>
         <el-progress :percentage="70" />
       </div>
@@ -27,26 +27,28 @@
 </template>
 
 <script>
-import PanThumb from "@/components/pan-thumb";
-import Mallki from "@/components/text-hover-effect/mallki";
+import PanThumb from '@/components/pan-thumb'
+import Mallki from '@/components/text-hover-effect/mallki'
+import avatar from '@/assets/img/avatar.png'
+
 export default {
   components: { PanThumb, Mallki },
   data() {
     return {
-      avatar: "/static/img/avatar.c58e465.png"
-    };
+      avatar: avatar
+    }
   },
   computed: {
     userName: {
       get() {
-        return this.$store.state.user.name;
+        return this.$store.state.user.name
       }
     }
   }
-};
+}
 </script>
 
-<style lang="scss" >
+<style lang="scss">
 .box-card-component {
   .el-card__header {
     padding: 0px !important;

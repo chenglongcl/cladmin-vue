@@ -1,68 +1,74 @@
 <template>
   <div>
     <div class="thumb">
-      <img :src='defaultUrl?defaultUrl:"/static/img/thumb_fakeimg.png"' alt="">
+      <el-image :src="defaultUrl ? defaultUrl : '/static/img/thumb_fakeimg.png'" fit="cover" />
     </div>
-    <el-button @click="handleUpload()">上传图片</el-button>
+    <el-button @click="handleUpload()">
+      上传图片
+    </el-button>
     <!-- 弹窗, 上传文件 -->
-    <UploaderOSS v-if="uploaderVisible" ref="uploaderOSS" :limit="uploaderLimit" :inputAttrs="uploaderInputAtrrs" @on-success-files="handleSuccessFiles" @on-fail-files="handleFailFiles"></UploaderOSS>
+    <UploaderOSS v-if="uploaderVisible" ref="uploaderOSS" :limit="uploaderLimit" :input-attrs="uploaderInputAtrrs" @on-success-files="handleSuccessFiles" @on-fail-files="handleFailFiles" />
   </div>
 </template>
 
 <script>
-import UploaderOSS from "@/components/upload/uploader-oss";
+import UploaderOSS from '@/components/upload/uploader-oss'
+
 export default {
-  props: {
-    defaultUrl: String,
-  },
   components: { UploaderOSS },
+  props: {
+    defaultUrl: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
-      url: "",
+      url: '',
       uploaderVisible: false,
       uploaderInputAtrrs: {
-        accept: "image/*",
+        accept: 'image/*'
       },
-      uploaderLimit: 1,
-    };
+      uploaderLimit: 1
+    }
   },
   computed: {
     thumbUrl() {
-      let url;
+      let url
       switch (true) {
-        case this.url != "":
-          url = this.url;
-          break;
-        case this.defaultUrl != "" && this.url == "":
-          url = this.defaultUrl;
-          break;
+        case this.url !== '':
+          url = this.url
+          break
+        case this.defaultUrl !== '' && this.url === '':
+          url = this.defaultUrl
+          break
         default:
-          url = "/static/img/thumb_fakeimg.png";
-          break;
+          url = '/static/img/thumb_fakeimg.png'
+          break
       }
-      return url;
-    },
+      return url
+    }
   },
   methods: {
     // 上传文件
     handleUpload() {
-      this.uploaderVisible = true;
+      this.uploaderVisible = true
       this.$nextTick(() => {
-        this.$refs.uploaderOSS.init();
-      });
+        this.$refs.uploaderOSS.init()
+      })
     },
-    //上传成功
+    // 上传成功
     handleSuccessFiles(files) {
-      console.log("上传成功的文件", files);
-      this.$emit("uploadSuccess", files);
+      console.log('上传成功的文件', files)
+      this.$emit('uploadSuccess', files)
     },
-    //上传失败
+    // 上传失败
     handleFailFiles(files) {
-      console.log("上传成失败的文件", files);
-      this.$emit("uploadFail", files);
-    },
-  },
-};
+      console.log('上传成失败的文件', files)
+      this.$emit('uploadFail', files)
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>
