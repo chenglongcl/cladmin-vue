@@ -25,7 +25,7 @@
         forced_root_block_attrs:{
           'style':'text-indent:2em'
         },
-        extended_valid_elements : 'p/div,p[class|style],img[src|alt|title],video[src|poster|controls],audio[src|controls]',
+        extended_valid_elements : 'p/div,p[class|style],img[src|alt|title|file-unique-id],video[src|poster|controls|file-unique-id|webkit-playsinline|x-webkit-airplay|playsinline|x5-video-player-type|x5-video-player-fullscreen],audio[src|controls|file-unique-id]',
         formats:{
             alignleft: {block:'p',styles:{'text-align':'left'}},
             aligncenter: {block:'p',styles:{'text-align':'center','text-indent':'0em'}},
@@ -101,7 +101,7 @@ export default {
           }
         })
         editor.ui.registry.addButton('uploadvideo', {
-          tooltip: '上传视频',
+          tooltip: '上传音视频',
           icon: 'embed',
           onAction: () => {
             this.changUploaderConfig({
@@ -231,17 +231,17 @@ export default {
             switch (file.contentType.split('/')[0]) {
               case 'image':
                 this.$refs.tinymceEditor.editor.insertContent(
-                  `<p style="text-align: center; text-indent: 0em;"><img src="${file.url}" /></p>`
+                  `<p style="text-align: center; text-indent: 0em;"><img file-unique-id="${file.fileUniqueId}" src="${file.url}" /></p>`
                 )
                 break
               case 'video':
                 this.$refs.tinymceEditor.editor.insertContent(
-                  `<p style="text-align: center; text-indent: 0em;"><video src="${file.url}" controls="controls"></video></p>`
+                  `<p style="text-align: center; text-indent: 0em;"><video file-unique-id="${file.fileUniqueId}" src="${file.url}" controls="controls"></video></p>`
                 )
                 break
               case 'audio':
                 this.$refs.tinymceEditor.editor.insertContent(
-                  `<p style="text-align: center; text-indent: 0em;"><audio src="${file.url}" controls="controls"></audio></p>`
+                  `<p style="text-align: center; text-indent: 0em;"><audio file-unique-id="${file.fileUniqueId}" src="${file.url}" controls="controls"></audio></p>`
                 )
                 break
               default:
@@ -253,7 +253,7 @@ export default {
         case 'uploaddocument': {
           files.forEach((file, index, arr) => {
             this.$refs.tinymceEditor.editor.insertContent(
-              `<a href="${file.url}" target="_blank">${file.fileName}</a>`
+              `<a id="${file.fileUniqueId}" href="${file.url}" target="_blank">${file.fileName}</a>`
             )
           })
           break
@@ -279,7 +279,8 @@ export default {
               this.$refs.tinymceEditor.editor.dom.create(
                 'img',
                 Object.assign(imgAttrs, {
-                  src: files[0].url
+                  src: files[0].url,
+                  'file-unique-id': files[0].fileUniqueId
                 })
               )
             )
@@ -306,7 +307,10 @@ export default {
                 this.$refs.tinymceEditor.editor.dom.create(
                   'video',
                   Object.assign(videoAttrs, {
-                    poster: files[0].url
+                    poster: files[0].url,
+                    'file-unique-id': editorSelection
+                      .getNode()
+                      .getAttribute('data-mce-p-file-unique-id')
                   })
                 )
               )

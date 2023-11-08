@@ -52,6 +52,7 @@ import dayjs from 'dayjs'
 import { parseString } from 'xml2js'
 import MyOSS from './js/oss'
 import { getUUID } from '@/utils'
+import { typeid } from 'typeid-js'
 
 export default {
   name: 'UploaderOSS',
@@ -194,16 +195,22 @@ export default {
         }, 100)
         return
       }
-      const objectName = `${dayjs().format(
+      const fileUniqueId = typeid().toString()
+      const objectName = `${file.fileType.split('/')[0]}/${dayjs().format(
         'YYYYMMDD'
       )}/${getUUID()}.${file.getExtension()}`
       try {
         const initResult = await this.ossClient.initMultipartUpload(
           objectName,
-          {}
+          {
+            meta: {
+              'unique-id': fileUniqueId
+            }
+          }
         )
         file.bucket = initResult.bucket
         file.key = initResult.name
+        file.uniqueId = fileUniqueId
         file.uploadId = initResult.uploadId
         file.multipartUploadParts = []
         file.requestUrl = `${initResult.res.requestUrls[0].split('?')[0]}`
@@ -230,7 +237,7 @@ export default {
       this.handleStat()
     },
     async handleSuccess(rootFile, file, message, chunk) {
-      this.ossClient.completeMultipartUpload(
+      await this.ossClient.completeMultipartUpload(
         file.key,
         file.uploadId,
         file.multipartUploadParts
@@ -322,6 +329,7 @@ export default {
         console.log(`${file.name}:获取文件信息失败-不支持的文件类型`)
       }
       return {
+        fileUniqueId: file.uniqueId,
         fileName: file.name,
         fileDescription: '',
         key: file.key,

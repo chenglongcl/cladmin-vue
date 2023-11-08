@@ -52,6 +52,7 @@ import dayjs from 'dayjs'
 import { parseString } from 'xml2js'
 import MyUploader from './js/uploader-local'
 import { getUUID } from '@/utils'
+import { typeid } from 'typeid-js'
 
 export default {
   name: 'UploaderLocal',
@@ -188,12 +189,14 @@ export default {
         }, 100)
         return
       }
+      const fileUniqueId = typeid().toString()
       const path = `${dayjs().format(
         'YYYYMMDD'
       )}/${getUUID()}.${file.getExtension()}`
       try {
         const initResult = await this.myUploader.initMultipartUpload(path, {})
         file.key = initResult.name
+        file.uniqueId = fileUniqueId
         file.uploadId = initResult.uploadId
         file.multipartUploadParts = []
         file.requestUrl = initResult.requestUrl
@@ -312,6 +315,7 @@ export default {
         console.log(`${file.name}:获取文件信息失败-不支持的文件类型`)
       }
       return {
+        fileUniqueId: file.uniqueId,
         fileName: file.name,
         fileDescription: '',
         key: file.key,
