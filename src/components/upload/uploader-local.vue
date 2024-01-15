@@ -35,7 +35,7 @@
             / {{ uploader.getFormatSize() }}，上传成功{{
               stat.numberOfSuccessFiles
             }}个，失败{{ stat.numberOfFailFiles }}个。</span>
-          <el-button size="mini" @click="handleConfirm">
+          <el-button v-debounce="{fun: 'handleConfirm', event: 'click', wait: 500}" size="mini">
             确认
           </el-button>
           <el-button size="mini" @click="handleClose">
@@ -190,7 +190,7 @@ export default {
         return
       }
       const fileUniqueId = typeid().toString()
-      const path = `${dayjs().format(
+      const path = `${file.fileType.split('/')[0] || 'other'}/${dayjs().format(
         'YYYYMMDD'
       )}/${getUUID()}.${file.getExtension()}`
       try {
@@ -347,23 +347,17 @@ export default {
         },
         async audio(file) {
           return new Promise((resolve) => {
-            const reader = new FileReader()
-            reader.onload = function(e) {
-              const data = e.target.result
-              // 加载图片获取图片真实宽度和高度
-              const audio = new Audio()
-              audio.onloadeddata = function() {
-                const { duration } = audio
-                resolve({
-                  duration: parseInt(duration * 1000)
-                })
-              }
-              audio.onerror = function() {
-                resolve({})
-              }
-              audio.src = data
+            const audioUrl = URL.createObjectURL(file.file)
+            const audio = document.createElement('audio')
+            audio.src = audioUrl
+            audio.onloadeddata = function() {
+              resolve({
+                duration: parseInt(this.duration * 1000)
+              })
             }
-            reader.readAsDataURL(file.file)
+            audio.onerror = function() {
+              resolve({})
+            }
           })
         },
         async video(file) {

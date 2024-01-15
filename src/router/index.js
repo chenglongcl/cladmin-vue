@@ -107,6 +107,7 @@ const createRouter = () => {
     scrollBehavior: () => ({
       y: 0
     }),
+    globalInitialized: false, // 是否已经初始化全局路由
     isAddDynamicMenuRoutes: false, // 是否已经添加动态(菜单)路由
     routes: globalRoutes.concat(mainRoutes)
   })
@@ -114,7 +115,18 @@ const createRouter = () => {
 
 const router = createRouter()
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async(to, from, next) => {
+  //
+  if (!router.options.globalInitialized) {
+    try {
+      await initGlobalApp()
+    } catch (error) {
+      console.log(
+        `%c${error} 初始化全局路由失败`,
+        'color:blue'
+      )
+    }
+  }
   // 添加动态(菜单)路由
   // 1. 已经添加 or 全局路由, 直接访问
   // 2. 获取菜单列表, 添加并保存本地存储
@@ -141,8 +153,36 @@ router.beforeEach((to, from, next) => {
   }
 })
 
+async function initGlobalApp() {
+  // 字典数组
+  const [dicts] = await Promise.all([
+    await request({
+      url: request.adornUrl('/external/dictType/all'),
+      method: 'get',
+      params: request.adornParams()
+    })
+  ])
+  const { data: dictsData = {}} = dicts
+  let result = true
+  //
+  if (dictsData && dictsData.code === 0) {
+    sessionStorage.setItem(
+      'dicts',
+      JSON.stringify(dictsData.data || '[]')
+    )
+  } else {
+    result = false
+  }
+  if (!result) {
+    sessionStorage.setItem('dicts', '[]')
+  }
+  //
+  router.options.globalInitialized = true
+  return result
+}
+
 async function initApp() {
-  const [menus, permissions, dicts, user] = await Promise.all([
+  const [menus, permissions, user] = await Promise.all([
     await request({
       url: request.adornUrl('/v1/menus/nav'),
       method: 'get',
@@ -154,11 +194,6 @@ async function initApp() {
       params: request.adornParams()
     }),
     await request({
-      url: request.adornUrl('/v1/dictType/all'),
-      method: 'get',
-      params: request.adornParams()
-    }),
-    await request({
       url: request.adornUrl('/v1/users/personal'),
       method: 'get',
       params: request.adornParams()
@@ -166,10 +201,9 @@ async function initApp() {
   ])
   const { data: menusData = {}} = menus
   const { data: permissionsData = {}} = permissions
-  const { data: dictsData = {}} = dicts
   const { data: userData = {}} = user
   let result = true
-  //
+  // 菜单
   if (menusData && menusData.code === 0) {
     fnAddDynamicMenuRoutes(menusData.data)
     router.options.isAddDynamicMenuRoutes = true
@@ -180,7 +214,7 @@ async function initApp() {
   } else {
     result = false
   }
-  //
+  // 权限
   if (permissionsData && permissionsData.code === 0) {
     sessionStorage.setItem(
       'permissions',
@@ -189,16 +223,7 @@ async function initApp() {
   } else {
     result = false
   }
-  //
-  if (dictsData && dictsData.code === 0) {
-    sessionStorage.setItem(
-      'dicts',
-      JSON.stringify(dictsData.data || '[]')
-    )
-  } else {
-    result = false
-  }
-  //
+  // 用户信息
   if (userData && userData.code === 0) {
     store.commit('user/updateId', userData.data.userId)
     store.commit('user/updateName', userData.data.username)

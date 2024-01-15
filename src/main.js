@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueCookie from 'vue-cookie' // api: https://github.com/alfhen/vue-cookie
 import cloneDeep from 'lodash/cloneDeep'
 import uploader from 'vue-simple-uploader'
+import vDebounceThrottle from 'v-debounce-throttle'
 import App from '@/App'
 import router from '@/router' // api: https://github.com/vuejs/vue-router
 import store from '@/store' // api: https://github.com/vuejs/vuex
@@ -18,6 +19,7 @@ import renDeptTree from '@/components/ren-dept-tree'
 import { isAuth, getDictLabel } from '@/utils'
 
 Vue.use(uploader)
+Vue.use(vDebounceThrottle)
 Vue.use(VueCookie)
 Vue.use(renSelect)
 Vue.use(renRadioGroup)

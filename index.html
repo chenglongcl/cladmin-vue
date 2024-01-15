@@ -9,7 +9,7 @@
   <% if (process.env.NODE_ENV === 'production') { %>
   <!-- 生产环境 -->
   <script>
-    document.write('<script src="./config/index.js?t=' + new Date().getTime() + '"><\/script>');
+    document.write('<script src="/config/index.js?t=' + new Date().getTime() + '"><\/script>');
 
   </script>
   <% }else { %>

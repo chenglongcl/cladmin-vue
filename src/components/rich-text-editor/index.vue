@@ -78,7 +78,11 @@ export default {
       uploaderExtra: {},
       currEditorSelectionID: '',
       contentData: '',
-      localSrc: '/static/tinymce/tinymce.min.js',
+      localSrc: `${
+        process.env.NODE_ENV === 'production'
+          ? window.SITE_CONFIG['version']
+          : ''
+      }/static/tinymce/tinymce.min.js`,
       defaultOptions: richTextEditorOptions,
       setup: (editor) => {
         editor.ui.registry.addButton('uploadimg', {
